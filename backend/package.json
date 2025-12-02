@@ -1,0 +1,14 @@
+{
+  "name": "ems-backend",
+  "version": "1.0.0",
+  "description": "Server code for expense monitoring sysetm",
+  "license": "ISC",
+  "author": "Adhil Ameen",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  }
+}
