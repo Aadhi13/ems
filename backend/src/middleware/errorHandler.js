@@ -1,5 +1,5 @@
 const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  console.error("Error caught in errorHandler: ", err);
   res.status(500).json({ error: "Internal Server Error" });
 };
 
