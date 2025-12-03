@@ -16,11 +16,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
-
-// for faster lookups on email
-userSchema.index({ email: 1 }, { unique: true });
 
 export default mongoose.model("users", userSchema);
