@@ -6,20 +6,29 @@ import { compareOtp, generateOtp, hashOtp } from "../utils/otp.js";
 
 export const register = async (req, res, next) => {
   try {
-    //TODO: handle error when invalid values are coming
+    //TODO: handle error when invalid values(invalid syntax) are coming
 
     const { name, email, password } = req.body;
 
     // Basic checks
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+    if (!email || !password || !name) {
+      return res
+        .status(400)
+        .json({ error: "Name, Email and password are required." });
     }
 
     //TODO: Check regex on password and email
 
     const existing = await userData.findOne({ email });
-    if (existing) {
-      return res.status(409).json({ error: "Email already in use" });
+    const isVerified = existing?.isVerified ?? false;
+    if (existing && isVerified) {
+      return res
+        .status(409)
+        .json({ error: "Email already in use. Try login." });
+    } else if (existing && !isVerified) {
+      return res
+        .status(409)
+        .json({ error: "Email already in use. Verify to login." });
     }
 
     // Create user on database
@@ -46,7 +55,7 @@ export const register = async (req, res, next) => {
 
     // Send email after generating OTP
     try {
-      await verificationMail(user, otp);
+      await verificationMail(user.name, user.email, otp);
     } catch (mailErr) {
       console.error("Error sending verification email", mailErr);
       return res.status(500).json({ message: "Something went wrong." });
@@ -110,20 +119,12 @@ export const verifyOtp = async (req, res, next) => {
     }
 
     // mark user verified
-    await userData.updateOne(
-      { _id: userDetails._id },
-      { isVerified: true }
-    );
+    await userData.updateOne({ _id: userDetails._id }, { isVerified: true });
 
     // mark ONLY the matched OTP as used (others remain valid until user verified, but won't matter after)
-    await userOtpData.updateOne(
-      { _id: matchedDoc._id },
-      { used: true }
-    );
+    await userOtpData.updateOne({ _id: matchedDoc._id }, { used: true });
 
-    return res
-      .status(200)
-      .json({ message: "OTP is correct, email verified." });
+    return res.status(200).json({ message: "OTP is correct, email is verified." });
   } catch (err) {
     next(err);
   }
