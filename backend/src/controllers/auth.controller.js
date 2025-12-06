@@ -44,7 +44,7 @@ export const register = async (req, res, next) => {
       expiresAt,
     });
 
-    // Send email after generatign OTP
+    // Send email after generating OTP
     try {
       await verificationMail(user, otp);
     } catch (mailErr) {
