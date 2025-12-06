@@ -8,7 +8,7 @@ const transporter = createTransport({
   },
 });
 
-export const verificationMail = async ({ email, name }, otp) => {
+export const verificationMail = async (name, email, otp) => {
   const mailOptions = {
     from: process.env.AUTH_EMAIL,
     to: email,
