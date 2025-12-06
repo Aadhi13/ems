@@ -1,7 +1,7 @@
 import userData from "../models/user.model.js";
 import userOtpData from "../models/otp.model.js";
 import { hashPassword } from "../utils/auth.js";
-import { verificationMail } from "../utils/mail.js";
+import { verificationMail, welcomeMail } from "../utils/mail.js";
 import { compareOtp, generateOtp, hashOtp } from "../utils/otp.js";
 
 export const register = async (req, res, next) => {
@@ -62,7 +62,7 @@ export const register = async (req, res, next) => {
       return res.status(500).json({ message: "Something went wrong. Contact developer for help." });
     }
 
-    //TODO: Send a welcome email to user along with step to verify.
+    await welcomeMail(user.name, user.email);
 
     return res.status(201).json({
       message: "User created. Please verify OTP sent to your email.",
