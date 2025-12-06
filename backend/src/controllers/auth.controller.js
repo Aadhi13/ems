@@ -6,6 +6,7 @@ import { compareOtp, generateOtp, hashOtp } from "../utils/otp.js";
 
 export const register = async (req, res, next) => {
   try {
+
     //TODO: handle error when invalid values(invalid syntax) are coming
 
     const { name, email, password } = req.body;
@@ -60,6 +61,9 @@ export const register = async (req, res, next) => {
       console.error("Error sending verification email", mailErr);
       return res.status(500).json({ message: "Something went wrong. Contact developer for help." });
     }
+
+    //TODO: Send a welcome email to user along with step to verify.
+
     return res.status(201).json({
       message: "User created. Please verify OTP sent to your email.",
       expiresAt,
@@ -123,6 +127,8 @@ export const verifyOtp = async (req, res, next) => {
 
     // mark ONLY the matched OTP as used (others remain valid until user verified, but won't matter after)
     await userOtpData.updateOne({ _id: matchedDoc._id }, { used: true });
+
+    //TODO: Send a verification successfull email to user
 
     return res.status(200).json({ message: "OTP is correct, email is verified." });
   } catch (err) {
