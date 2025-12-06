@@ -129,3 +129,53 @@ export const verifyOtp = async (req, res, next) => {
     next(err);
   }
 };
+
+export const resendOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body ?? "";
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const userDetails = await userData.findOne({ email });
+    if (!userDetails) {
+      return res.status(400).json({
+        message: "User not found. Register first then request OTP to verify.",
+      });
+    }
+
+    if (userDetails.isVerified) {
+      return res.status(200).json({ message: "Email is already verified." });
+    }
+
+    // Generate otp
+    const otp = generateOtp();
+    const otpHash = await hashOtp(otp);
+
+    // Create OTP record in DB
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
+    const newOtp = await userOtpData.create({
+      user: userDetails._id,
+      email,
+      otpHash,
+      expiresAt,
+    });
+
+    // Send email after generating OTP
+    try {
+      await verificationMail(userDetails.name, userDetails.email, otp);
+    } catch (mailErr) {
+      console.error("Error sending verification email", mailErr);
+      return res
+        .status(500)
+        .json({ message: "Something went wrong. Contact developer for help." });
+    }
+    return res.status(201).json({
+      message: "Please verify using OTP sent to your email.",
+      expiresAt,
+      email: userDetails.email,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
