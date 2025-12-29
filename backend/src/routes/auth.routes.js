@@ -5,6 +5,8 @@ const router = Router();
 
 // Authentication routes
 router.post("/register", register);
+
+// OTPs
 router.post("/verify-otp", verifyOtp);
 router.post("/resend-otp", resendOtp);
 
