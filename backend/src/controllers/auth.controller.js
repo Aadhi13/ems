@@ -1,12 +1,11 @@
 import userData from "../models/user.model.js";
 import userOtpData from "../models/otp.model.js";
-import { hashPassword } from "../utils/auth.js";
+import { hashPassword, comparePassword, createToken } from "../utils/auth.js";
 import { verificationMail, welcomeMail } from "../utils/mail.js";
 import { compareOtp, generateOtp, hashOtp } from "../utils/otp.js";
 
 export const register = async (req, res, next) => {
   try {
-
     //TODO: handle error when invalid values(invalid syntax) are coming
 
     const { name, email, password } = req.body;
@@ -181,6 +180,69 @@ export const resendOtp = async (req, res, next) => {
       expiresAt,
       email: userDetails.email,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+
+    const userDetails = await userData.findOne({ email });
+    if (userDetails) {
+      const match = await comparePassword(password, userDetails.passwordHash);
+      if (!match) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      if (userDetails.isVerified == false) {
+        try {
+          // Generate otp
+          const otp = generateOtp();
+          const otpHash = await hashOtp(otp);
+
+          // Create OTP record in DB
+          const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
+          const newOtp = await userOtpData.create({
+            user: userDetails._id,
+            email,
+            otpHash,
+            expiresAt,
+          });
+
+          // Send email after generating OTP
+          try {
+            await verificationMail(userDetails.name, userDetails.email, otp);
+          } catch (mailErr) {
+            console.error("Error sending verification email", mailErr);
+            return res.status(500).json({
+              message: "Something went wrong. Contact developer for help.",
+            });
+          }
+
+          return res.status(201).json({
+            message: "Please verify using OTP sent to your email.",
+            expiresAt,
+            email: userDetails.email,
+          });
+        } catch (err) {
+          return res.status(500).json({ message: "Something went wrong." });
+        }
+      }
+      if (match) {
+        const accessToken = createToken(userDetails._id);
+        return res
+          .status(201)
+          .json({ message: "Authentication successfull.", accessToken });
+      } else {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+    } else {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
   } catch (err) {
     next(err);
   }
