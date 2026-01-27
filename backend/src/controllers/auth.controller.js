@@ -58,7 +58,9 @@ export const register = async (req, res, next) => {
       await verificationMail(user.name, user.email, otp);
     } catch (mailErr) {
       console.error("Error sending verification email", mailErr);
-      return res.status(500).json({ message: "Something went wrong. Contact developer for help." });
+      return res
+        .status(500)
+        .json({ message: "Something went wrong. Contact developer for help." });
     }
 
     await welcomeMail(user.name, user.email);
@@ -129,7 +131,9 @@ export const verifyOtp = async (req, res, next) => {
 
     //TODO: Send a verification successfull email to user
 
-    return res.status(200).json({ message: "OTP is correct, email is verified." });
+    return res
+      .status(200)
+      .json({ message: "OTP is correct, email is verified." });
   } catch (err) {
     next(err);
   }
